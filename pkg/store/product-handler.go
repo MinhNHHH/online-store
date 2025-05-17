@@ -14,6 +14,7 @@ func (app *OnlineStore) GetProducts(w http.ResponseWriter, r *http.Request) {
 	productName := r.URL.Query().Get("product_name")
 	categoryName := r.URL.Query().Get("category_name")
 	status := r.URL.Query().Get("status")
+	description := r.URL.Query().Get("description")
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
 		page = 1
@@ -23,7 +24,7 @@ func (app *OnlineStore) GetProducts(w http.ResponseWriter, r *http.Request) {
 		pageSize = 10
 	}
 
-	products, total, err := app.DB.AllProducts(productName, categoryName, status, page, pageSize)
+	products, total, err := app.DB.AllProducts(productName, description, categoryName, status, page, pageSize)
 	if err != nil {
 		log.Printf("Error getting products: %v", err)
 		app.SendResponse(w, http.StatusBadRequest, err)

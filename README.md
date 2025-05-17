@@ -338,3 +338,91 @@ func handler(w http.ResponseWriter, r *http.Request) {
 ```
 ### BE PART2
 
+Product Search Optimization (Focus on data search performance):
+● Task: Implement a search API that allows users to search for products by description. You should generate 10 million product records and demonstrate how your system can search for products by description efficiently.
+● Objective: This question tests your ability to optimize search operations and handle large datasets.
+● Expectations: You need to write an API that can generate 10 million product records, and describe in the README file how someone reviewing your solution can use the API to generate these records. Additionally, explain your approach for efficiently searching the products by description in this large dataset.
+
+I think Elasticsearch it okay for this problem. If I switch to ElasticSearch, I need to refactor a lot my codes. such as: 
+1. Create new data model
+2. Implement new repository layer for ES
+3. Modify Business logic like: update product handler to use the new ES reporsitoy, implement some function that just support for search and insert, ....
+4. Update testing.
+5. And product have relationship with catergory. Therefore, some action insert or update need to satisfy ACID. So Psql good to me.
+
+I'm using PostgreSQL. I think use PostgreSQL’s built-in tsvector and tsquery functionality to perform full-text search efficiently. 
+
+```bash
+	description (TEXT): Stores the raw product description
+
+	description_tsv (TSVECTOR): Stores the tokenized, indexed form for search
+```
+
+```sql
+-- Automatically update tsvector using trigger
+CREATE FUNCTION update_tsvector_trigger() RETURNS trigger AS $$
+BEGIN
+  NEW.description_tsv := to_tsvector('english', NEW.description);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_tsv
+BEFORE INSERT OR UPDATE ON products
+FOR EACH ROW EXECUTE FUNCTION update_tsvector_trigger();
+
+-- Index for search performance
+CREATE INDEX idx_description_tsv ON products USING GIN(description_tsv);
+```
+
+I would say an easy way about GIN
+- The description_tsv column (type tsvector) contains tokens (words) extracted from the description.
+- The GIN index maps each unique word → the rows that contain it.
+Example:
+```
+| id   | description                                |
+| ---- | ------------------------------------------ |
+| 1    | A gaming laptop                            |
+| 2    | A lightweight ultrabook                    |
+| 5    | A lightweight device for travel            |
+| 10   | A lightweight gaming laptop for developers |
+| 104  | Budget gaming laptop                       |
+| 2024 | Best gaming laptop of 2024                 |
+```
+GIN	Index:
+```
+| Word          | Row IDs             |
+| ------------- | ------------------- |
+| `gaming`      | \[1, 10, 104, 2024] |
+| `laptop`      | \[1, 10, 104, 2024] |
+| `lightweight` | \[2, 5, 10]         |
+| `developers`  | \[10]               |
+| `budget`      | \[104]              |
+```
+We can see it is quite similar to the mechanism of ES.
+
+When we search 
+```
+SELECT * FROM products
+WHERE description_tsv @@ to_tsquery('english', 'gaming & laptop');
+```
+That mean: 
+- Look up "gaming" → [1, 10, 104, 2024]
+- Look up "laptop" → [1, 10, 104, 2024]
+
+And about `update_tsvector_trigger` that help to automatically keep the description_tsv column up to date with the tokenized version of the description field whenever a product is inserted or updated.
+
+For example:
+
+```sql
+INSERT INTO products (name, description)
+VALUES ('Gaming Laptop', 'A fast, lightweight gaming laptop');
+```
+
+```
+Automatically computed:
+description_tsv = to_tsvector('english', 'A fast, lightweight gaming laptop')
+
+Resulting tsvector (something like):
+'fast':2 'gaming':4 'laptop':5 'lightweight':3
+```

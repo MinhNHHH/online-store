@@ -12,7 +12,7 @@ type DatabaseRepo interface {
 	InsertCategory(category *schema.Category) (int, error)
 	UpdateCategory(category *schema.Category) error
 	DeleteCategory(id int) error
-	AllProducts(name, categoryName, status string, page, pageSize int) ([]*schema.Product, int, error)
+	AllProducts(name, description, categoryName, status string, page, pageSize int) ([]*schema.Product, int, error)
 	InsertProduct(product *schema.Product) (int, error)
 	UpdateProduct(product *schema.Product) error
 	DeleteProduct(id int) error
