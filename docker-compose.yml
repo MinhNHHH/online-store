@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: minhnh-online-store
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - SO_DB_CONNECTION_URI=${SO_DB_CONNECTION_URI}
+      - SO_POSTGRES_USER=${SO_POSTGRES_USER}
+      - SO_POSTGRES_PASSWORD=${SO_POSTGRES_PASSWORD}
+      - SO_POSTGRES_DB=${SO_POSTGRES_DB}
+      - SO_POSTGRES_HOST=${SO_POSTGRES_HOST}
+      - JWT_SECRET=${JWT_SECRET}
+    command: sh -c "./store migrate && ./store start"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:14
+    container_name: minhnh-postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${SO_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${SO_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${SO_POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+    driver: local
