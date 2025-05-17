@@ -268,3 +268,73 @@ Content-Type: application/json
 	"user_id":123
 }
 ```
+
+
+
+### RECOMMENDATIONS TO OPTIMIZE PERFORMANCE:
+    Use Redis to Cache HTTP Requests
+    To reduce redundant processing and improve response time, it's recommended to use Redis for caching HTTP request results. This is especially useful for endpoints with expensive database operations or third-party API calls.
+
+
+```go
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/redis/go-redis/v9"
+	"log"
+	"net/http"
+	"time"
+)
+
+var (
+	ctx   = context.Background()
+	rdb   = redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+)
+
+type Response struct {
+	Query string `json:"query"`
+	Data  string `json:"data"`
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("q")
+	cacheKey := fmt.Sprintf("data:%s", query)
+
+	cached, err := rdb.Get(ctx, cacheKey).Result()
+	if err == nil {
+		// Cache hit
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(cached))
+		return
+	}
+
+	time.Sleep(2 * time.Second)
+	result := Response{
+		Query: query,
+		Data:  fmt.Sprintf("Result for %s", query),
+	}
+
+	// Encode result as JSON and cache it
+	jsonData, err := json.Marshal(result)
+	if err != nil {
+		http.Error(w, "Error encoding JSON", http.StatusInternalServerError)
+		return
+	}
+
+	// Store in Redis for 60 seconds
+	err = rdb.Set(ctx, cacheKey, jsonData, 60*time.Second).Err()
+	if err != nil {
+		log.Printf("Failed to write to Redis: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+}
+```
+### BE PART2
+
