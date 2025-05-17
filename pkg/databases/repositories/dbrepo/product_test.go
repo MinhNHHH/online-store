@@ -59,60 +59,65 @@ func TestAllProducts(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
-		filterName   string
-		categoryName string
-		status       string
-		page         int
-		pageSize     int
-		wantTotal    int
-		description  string
+		name            string
+		filterName      string
+		categoryName    string
+		status          string
+		page            int
+		pageSize        int
+		wantTotal       int
+		description     string
+		descriptionTest string
 	}{
 		{
-			name:         "Get all products",
-			filterName:   "",
-			categoryName: "",
-			status:       "",
-			page:         1,
-			pageSize:     10,
-			wantTotal:    4,
-			description:  "Should return all products with pagination",
+			name:            "Get all products",
+			filterName:      "",
+			description:     "",
+			categoryName:    "",
+			status:          "",
+			page:            1,
+			pageSize:        10,
+			wantTotal:       4,
+			descriptionTest: "Should return all products with pagination",
 		},
 		{
-			name:         "Filter by name",
-			filterName:   "Test",
-			categoryName: "",
-			status:       "",
-			page:         1,
-			pageSize:     10,
-			wantTotal:    4,
-			description:  "Should return products matching name filter",
+			name:            "Filter by name",
+			filterName:      "Test",
+			description:     "",
+			categoryName:    "",
+			status:          "",
+			page:            1,
+			pageSize:        10,
+			wantTotal:       4,
+			descriptionTest: "Should return products matching name filter",
 		},
 		{
-			name:         "Filter by category",
-			filterName:   "",
-			categoryName: "Test Category 1",
-			status:       "",
-			page:         1,
-			pageSize:     10,
-			wantTotal:    4,
-			description:  "Should return products in specified category",
+			name:            "Filter by category",
+			filterName:      "",
+			description:     "",
+			categoryName:    "Test Category 1",
+			status:          "",
+			page:            1,
+			pageSize:        10,
+			wantTotal:       4,
+			descriptionTest: "Should return products in specified category",
 		},
 		{
-			name:         "Filter by status",
-			filterName:   "",
-			categoryName: "",
-			status:       "out_of_stock",
-			page:         1,
-			pageSize:     10,
-			wantTotal:    1,
-			description:  "Should return products with specified status",
+			name:            "Filter by status",
+			filterName:      "",
+			categoryName:    "",
+			description:     "",
+			status:          "out_of_stock",
+			page:            1,
+			pageSize:        10,
+			wantTotal:       1,
+			descriptionTest: "Should return products with specified status",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			products, total, err := testRepo.AllProducts(tt.filterName, tt.categoryName, tt.status, tt.page, tt.pageSize)
+			products, total, err := testRepo.AllProducts(tt.filterName, tt.description, tt.categoryName, tt.status, tt.page, tt.pageSize)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.wantTotal, total)
 			assert.LessOrEqual(t, len(products), tt.pageSize)

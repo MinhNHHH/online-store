@@ -50,7 +50,7 @@ func (p *TestDBRepo) DeleteCategory(id int) error {
 	return nil
 }
 
-func (p *TestDBRepo) AllProducts(name, categoryName, status string, page, pageSize int) ([]*schema.Product, int, error) {
+func (p *TestDBRepo) AllProducts(name, description, categoryName, status string, page, pageSize int) ([]*schema.Product, int, error) {
 	return nil, 0, nil
 }
 

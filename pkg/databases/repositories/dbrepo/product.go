@@ -10,7 +10,7 @@ import (
 	"github.com/MinhNHHH/online-store/pkg/databases/schema"
 )
 
-func (p *DBRepo) AllProducts(name, categoryName, status string, page, pageSize int) ([]*schema.Product, int, error) {
+func (p *DBRepo) AllProducts(name, description, categoryName, status string, page, pageSize int) ([]*schema.Product, int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
@@ -48,6 +48,13 @@ func (p *DBRepo) AllProducts(name, categoryName, status string, page, pageSize i
 		query += fmt.Sprintf(" AND p.status ILIKE $%d", argCount)
 		countQuery += fmt.Sprintf(" AND p.status ILIKE $%d", argCount)
 		args = append(args, "%"+status+"%")
+		argCount++
+	}
+
+	if description != "" {
+		query += fmt.Sprintf(" AND p.description_tsv @@ to_tsquery('english', $%d)", argCount)
+		countQuery += fmt.Sprintf(" AND p.description_tsv @@ to_tsquery('english', $%d)", argCount)
+		args = append(args, "%"+description+"%")
 		argCount++
 	}
 
